@@ -82,7 +82,7 @@ export class Snowglobe extends Scene {
             }
         }
 
-        const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const sun_color = color(1, 1, 1, 1);
         const sun_size = 2;
         program_state.lights = [new Light(vec4(-8,10,0,1), sun_color, 10**sun_size)];
@@ -141,8 +141,17 @@ export class Snowglobe extends Scene {
 
         //TODO: ground (Interior of globe must be drawn before the glass sphere to be visible)
         let mT = Mat4.identity();
-        model_transform = mT.times(Mat4.translation(4, -5, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(14.5,14.5,14.5));
+        model_transform = mT.times(Mat4.translation(4, -5, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(14.3,14.3,1/4));
         this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
+        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
+        while (t > 90) //reset after 90 seconds
+            t = t-90;
+        for (let i = 0; i < t; i++) {
+            model_transform = model_transform.times(Mat4.translation(0,0,-0.1));
+            this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
+            this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
+        }
+
 
         //TODO: Glass globe + stand
         model_transform = mT.times(Mat4.translation(4, -1, -8)).times(Mat4.scale(15,15,15));
@@ -151,6 +160,8 @@ export class Snowglobe extends Scene {
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
         model_transform = mT.times(Mat4.translation(4, -11, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(15,15,15));
         this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2);
+
+
     }
 }
 
