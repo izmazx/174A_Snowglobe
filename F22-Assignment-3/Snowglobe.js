@@ -14,23 +14,26 @@ export class Snowglobe extends Scene {
             torus: new defs.Torus(15, 15),
             torus2: new defs.Torus(3, 15),
             sphere: new defs.Subdivision_Sphere(4),
-            circle: new defs.Regular_2D_Polygon(1, 15),
+            circle: new defs.Regular_2D_Polygon(1, 30),
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
             cone: new defs.Closed_Cone(1, 15),
             pillar: new defs.Cube(),
-            triangle: new defs.Triangle()
+            triangle: new defs.Triangle(),
+            cylinder: new defs.Cylindrical_Tube(1, 30),
         }
 
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#ffffff")}),
+                {ambient: 1, diffusivity: 0, color : hex_color("#ffffff")}),
             test2: new Material(new Gouraud_Shader(),
-                {ambient: 1, diffusivity: .6, color: hex_color("#992828")}),
+                {ambient: .9, diffusivity: 1, specularity: 1, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
+            glass: new Material(new defs.Phong_Shader(),
+                {ambient: 0.01, diffusivity: 0.30, specularity: 1, color: vec4(0.827,0.914,0.929, .3)}),
             royce: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 0, color: hex_color("#daae8b")}),
             front: new Material(new defs.Phong_Shader(),
@@ -80,9 +83,9 @@ export class Snowglobe extends Scene {
         }
 
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        const sun_color = color(1, 0.5+0.5*Math.cos(2*Math.PI/20*t), 0.5+0.5*Math.cos(2*Math.PI/20*t), 1);
-        const sun_size = 2+Math.cos(2*Math.PI/20*t);
-        program_state.lights = [new Light(vec4(0,0,0,1), sun_color, 10**sun_size)];
+        const sun_color = color(1, 1, 1, 1);
+        const sun_size = 2;
+        program_state.lights = [new Light(vec4(-8,10,0,1), sun_color, 10**sun_size)];
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
@@ -135,6 +138,20 @@ export class Snowglobe extends Scene {
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
         model_transform = model_transform.times(Mat4.translation(42,0,0));
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
+
+        //TODO: ground (Interior of globe must be drawn before the glass sphere to be visible)
+        let mT = Mat4.identity();
+        model_transform = mT.times(Mat4.translation(4, -5, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(14.5,14.5,14.5));
+        this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
+
+        //TODO: Glass globe + stand
+        model_transform = mT.times(Mat4.translation(4, -1, -8)).times(Mat4.scale(15,15,15));
+        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.glass);
+        model_transform = mT.times(Mat4.translation(4, -13, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale( 15, 15, 5));
+        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
+        model_transform = mT.times(Mat4.translation(4, -11, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(15,15,15));
+        this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2);
+
     }
 }
 
@@ -330,4 +347,3 @@ class Ring_Shader extends Shader {
         }`;
     }
 }
-
