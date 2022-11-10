@@ -151,9 +151,9 @@ export class Snowglobe extends Scene {
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
         model_transform = mT.times(Mat4.translation(4, -11, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(15,15,15));
         this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2);
-
     }
 }
+
 
 class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
