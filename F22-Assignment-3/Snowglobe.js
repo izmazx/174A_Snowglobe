@@ -4,7 +4,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
-export class Assignment3 extends Scene {
+export class Snowglobe extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
@@ -17,31 +17,28 @@ export class Assignment3 extends Scene {
             circle: new defs.Regular_2D_Polygon(1, 15),
             // TODO:  Fill in as many additional shape instances as needed in this key/value table.
             //        (Requirement 1)
-            sun: new defs.Subdivision_Sphere(4),
-            planet1: new ( defs.Subdivision_Sphere.prototype.make_flat_shaded_version() )(2),
-            planet2: new defs.Subdivision_Sphere(3),
-            planet3: new defs.Subdivision_Sphere(4),
-            planet4: new defs.Subdivision_Sphere(4),
-            moon: new ( defs.Subdivision_Sphere.prototype.make_flat_shaded_version() )(1)
-        };
+            cone: new defs.Closed_Cone(1, 15),
+            pillar: new defs.Cube(),
+            triangle: new defs.Triangle()
+        }
 
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: 1, diffusivity: 0, color: hex_color("#ffffff")}),
             test2: new Material(new Gouraud_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#992828")}),
+                {ambient: 1, diffusivity: .6, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
-            sun: new Material(new defs.Phong_Shader(), {ambient: 1, diffusivity:0, specularity: 0, color: hex_color("#ff0000")}),
-            planet1: new Material(new defs.Phong_Shader(), {ambient: 0, diffusivity: 1, color: hex_color("#8d8d8d")}),
-            planet2: new Material(new defs.Phong_Shader(), {ambient: 0, diffusivity: .3, specularity: 1, color: hex_color("#80FFFF")}),
-            planet2_alt: new Material(new Gouraud_Shader(), {ambient: 0, diffusivity: .3, specularity: 1, color: hex_color("#80FFFF")}),
-            planet3: new Material(new defs.Phong_Shader(), {ambient: 0, diffusivity: 1, specularity: 1, color: hex_color("#B08040")}),
-            torus: new Material(new Ring_Shader(), {ambient: 1, diffusivity: 0, specularity: 0, color: hex_color("#B08040")}),
-            planet4: new Material(new defs.Phong_Shader(), {ambient: 0, specularity:1, color: hex_color("#ffffff")}),
-            moon: new Material(new defs.Phong_Shader(), {ambient: 0, specularity:1, color: hex_color("#6cff5b")})
+            royce: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#daae8b")}),
+            front: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#c49a77")}),
+            cone: new Material(new Gouraud_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#c49a77")}),
+            middle: new Material(new Gouraud_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")})
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 30), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -82,58 +79,62 @@ export class Assignment3 extends Scene {
             }
         }
 
-        program_state.projection_transform = Mat4.perspective(
-            Math.PI / 4, context.width / context.height, .1, 1000);
-
-
-        // TODO: Create Planets (Requirement 1)
-        // this.shapes.[XXX].draw([XXX]) // <--example
-
-        // TODO: Lighting (Requirement 2)
         const t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        const light_position = vec4(0, 5, 5, 1);
-        // The parameters of the Light are: position, color, size
         const sun_color = color(1, 0.5+0.5*Math.cos(2*Math.PI/20*t), 0.5+0.5*Math.cos(2*Math.PI/20*t), 1);
         const sun_size = 2+Math.cos(2*Math.PI/20*t);
         program_state.lights = [new Light(vec4(0,0,0,1), sun_color, 10**sun_size)];
 
-        // TODO:  Fill in matrix operations and drawing code to draw the solar system scene (Requirements 3 and 4)
-        const yellow = hex_color("#fac91a");
+        program_state.projection_transform = Mat4.perspective(
+            Math.PI / 4, context.width / context.height, .1, 1000);
+
+
+        // TODO:  Royce Hall building
         let model_transform = Mat4.identity();
+        model_transform = model_transform.times(Mat4.scale(1,5,1))
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce);//left pillar
 
-        model_transform = model_transform.times(Mat4.translation(5*Math.cos(t), 5*Math.sin(t), 0));
-        this.shapes.planet1.draw(context, program_state, model_transform, this.materials.planet1);
-        this.planet_1 = model_transform;
-        model_transform = model_transform.times(Mat4.translation(8*Math.cos(.85*t)-5*Math.cos(t), 8*Math.sin(0.85*t)-5*Math.sin(t), 0));
-        if (t % 2 < 1)
-            this.shapes.planet2.draw(context, program_state, model_transform, this.materials.planet2);
-        else
-            this.shapes.planet2.draw(context, program_state, model_transform, this.materials.planet2_alt);
-        this.planet_2 = model_transform;
+        model_transform = model_transform.times(Mat4.translation(0,1.2,0)).times(Mat4.scale(1,2/10,1/1)).times(Mat4.rotation(Math.PI/2,-1,0,0));
+        this.shapes.cone.draw(context, program_state, model_transform, this.materials.cone);//left cone
+        model_transform = model_transform.times(Mat4.rotation(-Math.PI/2,-1,0,0)).times(Mat4.scale(1,10/2,1/1)).times(Mat4.translation(0,-1.2,0));
 
-            model_transform = model_transform.times(Mat4.translation(11*Math.cos(.7*t)-8*Math.cos(.85*t), 11*Math.sin(.7*t)-8*Math.sin(0.85*t), 0));
-        this.shapes.planet3.draw(context, program_state, model_transform, this.materials.planet3);
-        this.planet_3 = model_transform;
+        model_transform = model_transform.times(Mat4.translation(-4,-.6,-2)).times(Mat4.scale(3,2/5,1));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce);//left base
+        model_transform = model_transform.times(Mat4.scale(1/3,5/2,1)).times(Mat4.translation(4,.6,2));
 
-        model_transform = model_transform.times(Mat4.scale(3.1, 3.1, 1));
+        model_transform = model_transform.times(Mat4.translation(8,0,0))
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right pillar
 
-        //model_transform = model_transform.times(Mat4.rotation(45, 2, 1, 0));
-        this.shapes.torus2.draw(context, program_state, model_transform, this.materials.torus);
-        //model_transform = model_transform.times(Mat4.rotation(-45, 2, 1, 0));
+        model_transform = model_transform.times(Mat4.translation(0,1.2,0)).times(Mat4.scale(1,2/10,1/1)).times(Mat4.rotation(Math.PI/2,-1,0,0));
+        this.shapes.cone.draw(context, program_state, model_transform, this.materials.cone); //right cone
+        model_transform = model_transform.times(Mat4.rotation(-Math.PI/2,-1,0,0)).times(Mat4.scale(1,10/2,1/1)).times(Mat4.translation(0,-1.2,0));
 
-        model_transform = model_transform.times(Mat4.scale(1/3.1, 1/3.1, 1))
-            .times(Mat4.translation(14*Math.cos(.55*t)-11*Math.cos(.7*t), 14*Math.sin(.55*t)-11*Math.sin(.7*t), 0));
-        this.shapes.planet4.draw(context, program_state, model_transform, this.materials.planet4);
-        this.planet_4 = model_transform;
+        model_transform = model_transform.times(Mat4.translation(4,-.6,-2)).times(Mat4.scale(3,2/5,1));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
+        model_transform = model_transform.times(Mat4.scale(1/3,5/2,1)).times(Mat4.translation(-4,.6,2));
 
-        model_transform = model_transform.times(Mat4.translation(2*Math.cos(t), 2*Math.sin(t), 0))
-            .times(Mat4.scale(1/2, 1/2, 1/2));
-        this.shapes.moon.draw(context, program_state, model_transform, this.materials.moon);
-        this.moon = model_transform;
+        model_transform = model_transform.times(Mat4.translation(-4,-.4,0)).times(Mat4.scale(3,3/5,1));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.front);//front of building
 
-        model_transform = model_transform.times(Mat4.scale(2, 2, 2)).times(Mat4.translation(-14*Math.cos(.55*t)-2*Math.cos(t), -14*Math.sin(.55*t)-2*Math.sin(t), 0));
-        model_transform = model_transform.times(Mat4.scale(sun_size, sun_size, sun_size));
-        this.shapes.sun.draw(context, program_state, model_transform, this.materials.sun.override(sun_color));
+        model_transform = model_transform.times(Mat4.translation(0,1,0)).times(Mat4.scale(1,1/2,1));
+        this.shapes.triangle.draw(context, program_state, model_transform, this.materials.front);//triangle at front
+        model_transform = model_transform.times(Mat4.rotation(Math.PI, 0, 1, 0))
+        this.shapes.triangle.draw(context, program_state, model_transform, this.materials.front);//triangle at front
+        model_transform = model_transform.times(Mat4.rotation(-Math.PI, 0, 1, 0))
+        model_transform = model_transform.times(Mat4.scale(1,2,1)).times(Mat4.translation(0,-1,0));
+
+        model_transform = model_transform.times(Mat4.translation(0,0,-7)).times(Mat4.scale(5/3,1,6));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.middle); //middle grey block
+
+        model_transform = model_transform.times(Mat4.scale(1,1/2,1)).times(Mat4.translation(1,-1,-1/3));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.middle); //right grey block
+
+        model_transform = model_transform.times(Mat4.translation(-2,0,0));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.middle); //left grey block
+
+        model_transform = model_transform.times(Mat4.scale(1/10,1,1)).times(Mat4.translation(-11,0,0));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
+        model_transform = model_transform.times(Mat4.translation(42,0,0));
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
     }
 }
 
