@@ -19,7 +19,8 @@ export class Snowglobe extends Scene {
             //        (Requirement 1)
             cone: new defs.Closed_Cone(1, 15),
             pillar: new defs.Cube(),
-            triangle: new defs.Triangle()
+            triangle: new defs.Triangle(),
+            ground: new defs.Regular_2D_Polygon(15, 15),
         }
 
         // *** Materials
@@ -38,7 +39,11 @@ export class Snowglobe extends Scene {
             cone: new Material(new Gouraud_Shader(),
                 {ambient: 1, diffusivity: 0, color: hex_color("#c49a77")}),
             middle: new Material(new Gouraud_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")})
+                {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")}),
+            ground: new Material(new defs.Phong_Shader(),
+                {ambient: 1, diffusivity: 0, color: hex_color("#79a939")}),
+            globe: new Material(new Gouraud_Shader(),
+                {ambient: 1, diffusivity: 0, color: color(1,1,1,.1)})
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 30), vec3(0, 0, 0), vec3(0, 1, 0));
@@ -135,8 +140,15 @@ export class Snowglobe extends Scene {
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
         model_transform = model_transform.times(Mat4.translation(42,0,0));
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
+
+        model_transform = Mat4.identity().times(Mat4.translation(4, -5.2, 0)).times(Mat4.scale(27, 1/2, 27)).times(Mat4.rotation(Math.PI/2, 1, 0, 0));
+        this.shapes.ground.draw(context, program_state, model_transform, this.materials.ground); //right base
+
+        model_transform = Mat4.identity().times(Mat4.translation(4, 7, 0)).times(Mat4.scale(30, 30, 30));
+        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.globe);
     }
 }
+
 
 class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
@@ -330,4 +342,5 @@ class Ring_Shader extends Shader {
         }`;
     }
 }
+
 
