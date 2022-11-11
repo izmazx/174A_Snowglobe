@@ -45,20 +45,15 @@ export class Snowglobe extends Scene {
                 {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")})
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 30), vec3(0, 0, 0), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 10, 50), vec3(0, 0, 0), vec3(0, 1, 0));
     }
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View snow globe", ["Control", "0"], () => this.attached = () => null);
+        this.key_triggered_button("View snow globe", ["Control", "0"], () => this.attached = () => this.initial_camera_location);
         this.new_line();
         this.key_triggered_button("View inside", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
-        this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
+        this.key_triggered_button("Shake", ["Control", "s"], () => this.attached = () => this.planet_2); //in case we implement shaking the globe
     }
 
     display(context, program_state) {
