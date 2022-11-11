@@ -4,6 +4,7 @@ const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
 } = tiny;
 
+
 export class Snowglobe extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
@@ -27,7 +28,7 @@ export class Snowglobe extends Scene {
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
                 {ambient: 1, diffusivity: 0, color : hex_color("#ffffff")}),
-            test2: new Material(new Gouraud_Shader(),
+            test2: new Material(new defs.Phong_Shader(),
                 {ambient: .9, diffusivity: 1, specularity: 1, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
@@ -49,9 +50,9 @@ export class Snowglobe extends Scene {
 
     make_control_panel() {
         // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
-        this.key_triggered_button("View solar system", ["Control", "0"], () => this.attached = () => null);
+        this.key_triggered_button("View snow globe", ["Control", "0"], () => this.attached = () => null);
         this.new_line();
-        this.key_triggered_button("Attach to planet 1", ["Control", "1"], () => this.attached = () => this.planet_1);
+        this.key_triggered_button("View inside", ["Control", "1"], () => this.attached = () => this.planet_1);
         this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
         this.new_line();
         this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
@@ -66,11 +67,14 @@ export class Snowglobe extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(this.initial_camera_location);
+            program_state.set_camera(this.initial_camera_location.times(Mat4.translation(0, -15, -40)));
         }
+        let model_transform = Mat4.identity();
+        this.planet_1 = model_transform.times(Mat4.translation(-6,10,12)).times(Mat4.rotation(.8, -.4, -.3, 0));
+
         if (this.attached != null) {
             if (this.attached() == null) {
-                program_state.set_camera(this.initial_camera_location);
+                program_state.set_camera(this.initial_camera_location.times(Mat4.translation(0, -15, -40)));
             }
             else {
                 let desired = this.attached();
@@ -84,15 +88,15 @@ export class Snowglobe extends Scene {
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         const sun_color = color(1, 1, 1, 1);
-        const sun_size = 2;
-        program_state.lights = [new Light(vec4(-8,10,0,1), sun_color, 10**sun_size)];
+        const sun_size = 5;
+        program_state.lights = [new Light(vec4(-30,100,0,1), sun_color, 10**sun_size)];
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
 
         // TODO:  Royce Hall building
-        let model_transform = Mat4.identity();
+
         model_transform = model_transform.times(Mat4.scale(1,5,1))
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce);//left pillar
 
@@ -141,7 +145,7 @@ export class Snowglobe extends Scene {
 
         //TODO: ground (Interior of globe must be drawn before the glass sphere to be visible)
         let mT = Mat4.identity();
-        model_transform = mT.times(Mat4.translation(4, -5, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(14.3,14.3,1/4));
+        model_transform = mT.times(Mat4.translation(4, -5, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(19,19,1/4));
         this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
         while (t > 90) //reset after 90 seconds
@@ -152,19 +156,18 @@ export class Snowglobe extends Scene {
             this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
         }
 
-
         //TODO: Glass globe + stand
-        model_transform = mT.times(Mat4.translation(4, -1, -8)).times(Mat4.scale(15,15,15));
+        model_transform = mT.times(Mat4.translation(4, 5, 0)).times(Mat4.scale(22,22,22));
         this.shapes.sphere.draw(context, program_state, model_transform, this.materials.glass);
-        model_transform = mT.times(Mat4.translation(4, -13, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale( 15, 15, 5));
+        model_transform = mT.times(Mat4.translation(4, -18, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale( 22, 22, 10));
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
-        model_transform = mT.times(Mat4.translation(4, -11, -8)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(15,15,15));
-        this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2);
+        model_transform = mT.times(Mat4.translation(4, -13, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(22,22,1));
+        this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2.override({color: hex_color("#c93030")}));
+
 
 
     }
 }
-
 
 class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
