@@ -9,6 +9,9 @@ export class Snowglobe extends Scene {
     constructor() {
         // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
+        this.sG = false;
+        this.pos = [];
+        this.snow_amount = 30;
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
@@ -42,8 +45,11 @@ export class Snowglobe extends Scene {
             cone: new Material(new Gouraud_Shader(),
                 {ambient: 1, diffusivity: 0, color: hex_color("#c49a77")}),
             middle: new Material(new Gouraud_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")})
+                {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")}),
+            snowfall: new Material(new Snow_Shader(),
+                {color: hex_color("#ffffff"), op: .4}),
         }
+
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 10, 30), vec3(0, 0, 0), vec3(0, 1, 0));
     }
@@ -53,13 +59,35 @@ export class Snowglobe extends Scene {
         this.key_triggered_button("View snow globe", ["Control", "0"], () => this.attached = () => null);
         this.new_line();
         this.key_triggered_button("View inside", ["Control", "1"], () => this.attached = () => this.planet_1);
-        this.key_triggered_button("Attach to planet 2", ["Control", "2"], () => this.attached = () => this.planet_2);
+        this.key_triggered_button("Generate snow", ["Control", "2"], this.snow_generator);
         this.new_line();
-        this.key_triggered_button("Attach to planet 3", ["Control", "3"], () => this.attached = () => this.planet_3);
-        this.key_triggered_button("Attach to planet 4", ["Control", "4"], () => this.attached = () => this.planet_4);
-        this.new_line();
-        this.key_triggered_button("Attach to moon", ["Control", "m"], () => this.attached = () => this.moon);
     }
+
+    snow_generator() {
+        this.sG = true;
+        let emptyPos = [];
+        this.pos = emptyPos;
+
+        for (let j = 0; j < this.snow_amount; j++) {
+            let px = Math.random() * Math.pow(-1, Math.floor(Math.random() * 10));
+            let py = Math.random(); // only positive y hemisphere generates snow
+            let pz = Math.random() * Math.pow(-1, Math.floor(Math.random() * 10));
+            if (px == 0 && py == 0 && pz == 0) {
+                px = Math.random();
+                py = Math.random();
+                pz = Math.random();
+            }
+            let c = (1 / (Math.sqrt(px * px + py * py + pz * pz)));
+            px = px * c * 21;
+            py = py * c * 21;
+            pz = pz * c * 21;
+
+            let p = [];
+            p.push(px, py, pz);
+            this.pos.push(p);
+        }
+    }
+
 
     display(context, program_state) {
         // display():  Called once per frame of animation.
@@ -156,6 +184,26 @@ export class Snowglobe extends Scene {
             this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
         }
 
+        //TODO: Snowfall
+        //periodic motion of snowfall
+        let p = Math.abs(Math.sin(t / 2));
+        if ((Math.floor(t / (Math.PI))) % 2 == 0) {
+            p = Math.abs(Math.cos(t / 2));
+        }
+        if (this.sG) {
+            //apply randomly generated positions
+            for (let i = 0; i < this.snow_amount; i++) {
+                let r = Math.random();
+                let qx = this.pos[i][0];
+                let qy = this.pos[i][1];
+                let qz = this.pos[i][2];
+                model_transform = mT.times(Mat4.translation(qx + 4, qy * p + 5, qz)).times(Mat4.scale(0.2, 0.2, 0.2));
+                this.shapes.sphere.draw(context, program_state, model_transform, this.materials.snowfall.override({op: 1 - Math.abs(Math.cos(t))}));
+            }
+
+            if (Math.abs(Math.cos(t)) > .9999) this.snow_generator();
+       }
+
         //TODO: Glass globe + stand
         model_transform = mT.times(Mat4.translation(4, 5, 0)).times(Mat4.scale(22,22,22));
         this.shapes.sphere.draw(context, program_state, model_transform, this.materials.glass);
@@ -163,7 +211,6 @@ export class Snowglobe extends Scene {
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
         model_transform = mT.times(Mat4.translation(4, -13, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(22,22,1));
         this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2.override({color: hex_color("#c93030")}));
-
 
 
     }
@@ -359,5 +406,57 @@ class Ring_Shader extends Shader {
         void main(){
           gl_FragColor = sin(80. * distance(center.xyz, point_position.xyz))*vec4(.69, .502, .251, 1);
         }`;
+    }
+}
+
+class Snow_Shader extends Shader {
+    update_GPU(context, gpu_addresses, graphics_state, model_transform, material) {
+        // update_GPU():  Defining how to synchronize our JavaScript's variables to the GPU's:
+        const [P, C, M] = [graphics_state.projection_transform, graphics_state.camera_inverse, model_transform],
+            PCM = P.times(C).times(M);
+        context.uniformMatrix4fv(gpu_addresses.model_transform, false, Matrix.flatten_2D_to_1D(model_transform.transposed()));
+        context.uniformMatrix4fv(gpu_addresses.projection_camera_model_transform, false,
+            Matrix.flatten_2D_to_1D(PCM.transposed()));
+
+        // Set uniform parameters
+        context.uniform4fv(gpu_addresses.shape_color, material.color);
+        context.uniform1f(gpu_addresses.op_val, material.op); // <---
+    }
+
+    constructor() {
+        super();
+    }
+
+    shared_glsl_code() {
+        // ********* SHARED CODE, INCLUDED IN BOTH SHADERS *********
+        return ` 
+        precision mediump float;
+        `;
+    }
+
+    vertex_glsl_code() {
+        // ********* VERTEX SHADER *********
+        return this.shared_glsl_code() + `
+            attribute vec3 position, normal;       
+            
+            uniform mat4 model_transform;
+            uniform mat4 projection_camera_model_transform;
+    
+            void main(){                                                                   
+                // The vertex's final resting place (in NDCS):
+                gl_Position = projection_camera_model_transform * vec4( position, 1.0 ); 
+            } `;
+    }
+
+    fragment_glsl_code() {
+        // ********* FRAGMENT SHADER *********
+        return this.shared_glsl_code() + `
+            uniform vec4 shape_color; 
+            uniform float op_val; // <---
+        
+            void main(){              
+                vec4 mixed_color = vec4(shape_color.xyz, op_val);
+                gl_FragColor = mixed_color;
+            } `;
     }
 }
