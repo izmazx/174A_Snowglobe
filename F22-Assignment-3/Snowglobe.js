@@ -197,8 +197,8 @@ export class Snowglobe extends Scene {
                 let qx = this.pos[i][0];
                 let qy = this.pos[i][1];
                 let qz = this.pos[i][2];
-                model_transform = mT.times(Mat4.translation(qx + 4, qy * p + 5, qz)).times(Mat4.scale(0.5, 0.5, 0.5));
-                this.shapes.circle.draw(context, program_state, model_transform, this.materials.snowfall.override({op: 1 - Math.abs(Math.cos(t))}));
+                model_transform = mT.times(Mat4.translation(qx + 4, qy * p + 5, qz)).times(Mat4.scale(0.2, 0.2, 0.2));
+                this.shapes.sphere.draw(context, program_state, model_transform, this.materials.snowfall.override({op: 1 - Math.abs(Math.cos(t))}));
             }
 
             if (Math.abs(Math.cos(t)) > .9999) this.snow_generator();
