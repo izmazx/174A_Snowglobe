@@ -15,7 +15,7 @@ export class Snowglobe extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            torus: new defs.Torus(15, 15),
+            torus: new defs.Torus(15, 30),
             torus2: new defs.Torus(3, 15),
             sphere: new defs.Subdivision_Sphere(4),
             circle: new defs.Regular_2D_Polygon(1, 30),
@@ -30,24 +30,26 @@ export class Snowglobe extends Scene {
         // *** Materials
         this.materials = {
             test: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color : hex_color("#ffffff")}),
-            test2: new Material(new defs.Phong_Shader(),
-                {ambient: .9, diffusivity: 1, specularity: 1, color: hex_color("#992828")}),
+                {ambient: 0.4, diffusivity: 1, specularity: 1, color : hex_color("#ffffff")}),
+            test2: new Material(new Gouraud_Shader(),
+                {ambient: .2, diffusivity: 1, specularity: 1, color: hex_color("#992828")}),
             ring: new Material(new Ring_Shader()),
             // TODO:  Fill in as many additional material objects as needed in this key/value table.
             //        (Requirement 4)
             glass: new Material(new defs.Phong_Shader(),
                 {ambient: 0.01, diffusivity: 0.30, specularity: 1, color: vec4(0.827,0.914,0.929, .3)}),
             royce: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#daae8b")}),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#daae8b")}),
             front: new Material(new defs.Phong_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#c49a77")}),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#c49a77")}),
             cone: new Material(new Gouraud_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#c49a77")}),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#c49a77")}),
             middle: new Material(new Gouraud_Shader(),
-                {ambient: 1, diffusivity: 0, color: hex_color("#8c8c8c")}),
+                {ambient: 0.8, diffusivity: 1, color: hex_color("#8c8c8c")}),
             snowfall: new Material(new Snow_Shader(),
                 {color: hex_color("#ffffff"), op: .4}),
+            lamp: new Material(new defs.Phong_Shader(),
+                 {ambient: 1, diffusivity: 0, color: hex_color("#f7d497")}),
         }
 
 
@@ -115,16 +117,38 @@ export class Snowglobe extends Scene {
         }
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        const sun_color = color(1, 1, 1, 1);
-        const sun_size = 5;
-        program_state.lights = [new Light(vec4(-30,100,0,1), sun_color, 10**sun_size)];
+        program_state.lights = [];
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, .1, 1000);
 
+        // TODO: lamps, trees
+        const lamp_color = hex_color("#ffd478");
+        let lamp_size = 1.5;
+        program_state.lights.push(new Light(vec4(-1,-2,10,1), lamp_color, 10**lamp_size));
+        program_state.lights.push(new Light(vec4(8,-2,10,1), lamp_color, 10**lamp_size));
+        let mT = Mat4.identity();
+        model_transform = mT.times(Mat4.translation(-1, -1, 10)).times(Mat4.scale(.5,.5,.5));
+        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.lamp);
+        model_transform = mT.times(Mat4.translation(-1, -3, 10)).times(Mat4.rotation(Math.PI / 2, 1, 0 ,0)).times(Mat4.scale(.08, .08, 4));
+        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test.override({color: hex_color("#000000")}));
+        model_transform = mT.times(Mat4.translation(8, -1, 10)).times(Mat4.scale(.5,.5,.5));
+        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.lamp);
+        model_transform = mT.times(Mat4.translation(8, -3, 10)).times(Mat4.rotation(Math.PI / 2, 1, 0 ,0)).times(Mat4.scale(.08, .08, 4));
+        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test.override({color: hex_color("#000000")}));
+
+        model_transform = mT.times(Mat4.translation(-7, -1, 7)).times(Mat4.scale(1, 1, 1)).times(Mat4.rotation(Math.PI / 2, -1, 0,0));
+        this.shapes.cone.draw(context, program_state, model_transform, this.materials.test2.override({color: hex_color("#1f5204")}));
+        model_transform = mT.times(Mat4.translation(-7, -1.8, 7)).times(Mat4.scale(1.1, .9, 1.1)).times(Mat4.rotation(Math.PI / 2, -1, 0,0));
+        this.shapes.cone.draw(context, program_state, model_transform, this.materials.test2.override({color: hex_color("#1f5204")}));
+        model_transform = mT.times(Mat4.translation(-7, -2.5, 7)).times(Mat4.scale(1.3, .9, 1.3)).times(Mat4.rotation(Math.PI / 2, -1, 0,0));
+        this.shapes.cone.draw(context, program_state, model_transform, this.materials.test2.override({color: hex_color("#1f5204")}));
+        model_transform = mT.times(Mat4.translation(-7, -5, 7)).times(Mat4.rotation(Math.PI / 2, 1, 0 ,0)).times(Mat4.scale(.4, .4, 3));
+        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test.override({color: hex_color("#522604")}));
+
 
         // TODO:  Royce Hall building
-
+        model_transform = mT;
         model_transform = model_transform.times(Mat4.scale(1,5,1))
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce);//left pillar
 
@@ -172,7 +196,6 @@ export class Snowglobe extends Scene {
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
 
         //TODO: ground (Interior of globe must be drawn before the glass sphere to be visible)
-        let mT = Mat4.identity();
         model_transform = mT.times(Mat4.translation(4, -5, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(19,19,1/4));
         this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
@@ -183,6 +206,8 @@ export class Snowglobe extends Scene {
             this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
             this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
         }
+        program_state.lights.pop();
+        program_state.lights.pop();
 
         //TODO: Snowfall
         //periodic motion of snowfall
@@ -204,13 +229,25 @@ export class Snowglobe extends Scene {
             if (Math.abs(Math.cos(t)) > .9999) this.snow_generator();
        }
 
+
+
         //TODO: Glass globe + stand
+        const sun_color = color(1, 1, 1, 1);
+        const sun_size = 5;
+        program_state.lights.push(new Light(vec4(-30,100,0,1), sun_color, 10**sun_size));
+
         model_transform = mT.times(Mat4.translation(4, 5, 0)).times(Mat4.scale(22,22,22));
         this.shapes.sphere.draw(context, program_state, model_transform, this.materials.glass);
+
+
+        program_state.lights.push(new Light(vec4(-30,-40,15,1), sun_color, 10**4));
+        program_state.lights.push(new Light(vec4(50,-40,15,1), sun_color, 10**4));
+        program_state.lights.push(new Light(vec4(0,-10,-40,1), sun_color, 10**3.2));
+
         model_transform = mT.times(Mat4.translation(4, -18, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale( 22, 22, 10));
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
-        model_transform = mT.times(Mat4.translation(4, -13, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(22,22,1));
-        this.shapes.circle.draw(context, program_state, model_transform, this.materials.test2.override({color: hex_color("#c93030")}));
+        model_transform = mT.times(Mat4.translation(4, -13, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(22.4,22.4,0.1)).times(Mat4.rotation(Math.PI / 2, 0, 0, 1));
+        this.shapes.torus.draw(context, program_state, model_transform, this.materials.test2.override({diffusivity: 1}));
 
 
     }
@@ -220,7 +257,7 @@ class Gouraud_Shader extends Shader {
     // This is a Shader using Phong_Shader as template
     // TODO: Modify the glsl coder here to create a Gouraud Shader (Planet 2)
 
-    constructor(num_lights = 2) {
+    constructor(num_lights = 5) {
         super();
         this.num_lights = num_lights;
     }
