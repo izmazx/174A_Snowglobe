@@ -1,8 +1,10 @@
 import {defs, tiny} from './examples/common.js';
 
 const {
-    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene,
+    Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
 } = tiny;
+
+const {Cube, Axis_Arrows, Textured_Phong} = defs
 
 
 export class Snowglobe extends Scene {
@@ -40,8 +42,23 @@ export class Snowglobe extends Scene {
                 {ambient: 0.01, diffusivity: 0.30, specularity: 1, color: vec4(0.827,0.914,0.929, .3)}),
             royce: new Material(new defs.Phong_Shader(),
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#daae8b")}),
-            front: new Material(new defs.Phong_Shader(),
-                {ambient: 0.8, diffusivity: 1, color: hex_color("#c49a77")}),
+            front: new Material(new Textured_Phong,
+                {   color: hex_color("#000000"),
+                    ambient: 1,
+                    texture: new Texture("assets/royce_front.png", "NEAREST")}),
+            top: new Material(new Textured_Phong,
+                {   color: hex_color("#000000"),
+                    ambient: 1,
+                    texture: new Texture("assets/royce_top.png", "NEAREST")}),
+            pillar: new Material(new Textured_Phong,
+                {   color: hex_color("#000000"),
+                    ambient: 1,
+                    texture: new Texture("assets/royce_sides.png", "NEAREST")}),
+            base: new Material(new Textured_Phong,
+                {   color: hex_color("#000000"),
+                    ambient: 1,
+                    texture: new Texture("assets/royce_base.png", "NEAREST")}),
+
             cone: new Material(new Gouraud_Shader(),
                 {ambient: 0.8, diffusivity: 1, color: hex_color("#c49a77")}),
             middle: new Material(new Gouraud_Shader(),
@@ -147,37 +164,37 @@ export class Snowglobe extends Scene {
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test.override({color: hex_color("#522604")}));
 
 
-        // TODO:  Royce Hall building
+        // Royce Hall building
         model_transform = mT;
         model_transform = model_transform.times(Mat4.scale(1,5,1))
-        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce);//left pillar
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.pillar);//left pillar
 
         model_transform = model_transform.times(Mat4.translation(0,1.2,0)).times(Mat4.scale(1,2/10,1/1)).times(Mat4.rotation(Math.PI/2,-1,0,0));
         this.shapes.cone.draw(context, program_state, model_transform, this.materials.cone);//left cone
         model_transform = model_transform.times(Mat4.rotation(-Math.PI/2,-1,0,0)).times(Mat4.scale(1,10/2,1/1)).times(Mat4.translation(0,-1.2,0));
 
         model_transform = model_transform.times(Mat4.translation(-4,-.6,-2)).times(Mat4.scale(3,2/5,1));
-        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce);//left base
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.base);//left base
         model_transform = model_transform.times(Mat4.scale(1/3,5/2,1)).times(Mat4.translation(4,.6,2));
 
         model_transform = model_transform.times(Mat4.translation(8,0,0))
-        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right pillar
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.pillar); //right pillar
 
         model_transform = model_transform.times(Mat4.translation(0,1.2,0)).times(Mat4.scale(1,2/10,1/1)).times(Mat4.rotation(Math.PI/2,-1,0,0));
         this.shapes.cone.draw(context, program_state, model_transform, this.materials.cone); //right cone
         model_transform = model_transform.times(Mat4.rotation(-Math.PI/2,-1,0,0)).times(Mat4.scale(1,10/2,1/1)).times(Mat4.translation(0,-1.2,0));
 
         model_transform = model_transform.times(Mat4.translation(4,-.6,-2)).times(Mat4.scale(3,2/5,1));
-        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.royce); //right base
+        this.shapes.pillar.draw(context, program_state, model_transform, this.materials.base); //right base
         model_transform = model_transform.times(Mat4.scale(1/3,5/2,1)).times(Mat4.translation(-4,.6,2));
 
         model_transform = model_transform.times(Mat4.translation(-4,-.4,0)).times(Mat4.scale(3,3/5,1));
         this.shapes.pillar.draw(context, program_state, model_transform, this.materials.front);//front of building
 
         model_transform = model_transform.times(Mat4.translation(0,1,0)).times(Mat4.scale(1,1/2,1));
-        this.shapes.triangle.draw(context, program_state, model_transform, this.materials.front);//triangle at front
+        this.shapes.triangle.draw(context, program_state, model_transform, this.materials.top);//triangle at front
         model_transform = model_transform.times(Mat4.rotation(Math.PI, 0, 1, 0))
-        this.shapes.triangle.draw(context, program_state, model_transform, this.materials.front);//triangle at front
+        this.shapes.triangle.draw(context, program_state, model_transform, this.materials.top);//triangle at front
         model_transform = model_transform.times(Mat4.rotation(-Math.PI, 0, 1, 0))
         model_transform = model_transform.times(Mat4.scale(1,2,1)).times(Mat4.translation(0,-1,0));
 
@@ -248,8 +265,6 @@ export class Snowglobe extends Scene {
         this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test2);
         model_transform = mT.times(Mat4.translation(4, -13, 0)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(22.4,22.4,0.1)).times(Mat4.rotation(Math.PI / 2, 0, 0, 1));
         this.shapes.torus.draw(context, program_state, model_transform, this.materials.test2.override({diffusivity: 1}));
-
-
     }
 }
 
