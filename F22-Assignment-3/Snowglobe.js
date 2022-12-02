@@ -119,6 +119,9 @@ export class Snowglobe extends Scene {
             this.pos.push(p);
         }
     }
+    delay(time) {
+        return new Promise(resolve => setTimeout(resolve, time));
+    }
 
 
     display(context, program_state) {
@@ -146,10 +149,6 @@ export class Snowglobe extends Scene {
         }
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        if (this.reset) {
-            this.resettime = program_state.animation_time / 1000;
-            this.reset = false;
-        }
         program_state.lights = [];
 
         program_state.projection_transform = Mat4.perspective(
@@ -158,7 +157,7 @@ export class Snowglobe extends Scene {
 
         model_transform = model_transform.times(Mat4.translation(7,20,0)).times(Mat4.scale(1.5,1.5,1.5));
         program_state.lights.push(new Light(vec4(7,20,0,1), color(0, 0, 0, 1), 10));
-        this.shapes.sphere.draw(context, program_state, model_transform, this.materials.lamp);
+        //this.shapes.sphere.draw(context, program_state, model_transform, this.materials.lamp);
 
 
         // TODO: lamps, trees
@@ -238,15 +237,28 @@ export class Snowglobe extends Scene {
 
         //TODO: ground (Interior of globe must be drawn before the glass sphere to be visible)
         model_transform = mT.times(Mat4.translation(4, -5, -0.4)).times(Mat4.rotation(Math.PI * .5, 1, 0, 0)).times(Mat4.scale(19.3,19.3,1/4));
-        this.shapes.circle.draw(context, program_state, model_transform, this.materials.test);
-        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.test);
+        this.shapes.circle.draw(context, program_state, model_transform, this.materials.snow);
+        this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.snow);
+
+        if (this.reset || (this.sG && this.resettime == 0)) {
+            this.resettime = program_state.animation_time / 1000;
+                program_state.set_camera(this.initial_camera_location.times(Mat4.translation(0, 10, -40)));
+                this.delay(.5);
+                program_state.set_camera(this.initial_camera_location.times(Mat4.translation(5, 5, -40)));
+            this.delay(.5);
+                program_state.set_camera(this.initial_camera_location.times(Mat4.translation(-5, -5, -40)));
+
+            this.reset = false;
+        }
         t = t - this.resettime;
         while (t > 90) //reset after 90 seconds
             t = t-90;
-        for (let i = 0; i < t; i++) {
-            model_transform = model_transform.times(Mat4.translation(0,0,-0.1)).times(Mat4.scale(1.0007,1.0007,1));
-            this.shapes.circle.draw(context, program_state, model_transform, this.materials.snow);
-            this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.snow);
+        if (this.sG) {
+            for (let i = 0; i < t; i++) {
+                model_transform = model_transform.times(Mat4.translation(0,0,-0.1)).times(Mat4.scale(1.0007,1.0007,1));
+                this.shapes.circle.draw(context, program_state, model_transform, this.materials.snow);
+                this.shapes.cylinder.draw(context, program_state, model_transform, this.materials.snow);
+            }
         }
         program_state.lights.pop();
         program_state.lights.pop();
