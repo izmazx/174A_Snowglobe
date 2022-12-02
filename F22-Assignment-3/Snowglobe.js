@@ -69,6 +69,7 @@ export class Snowglobe extends Scene {
         this.key_triggered_button("View inside", ["Control", "1"], () => this.attached = () => this.planet_1);
         this.key_triggered_button("Generate snow", ["Control", "2"], this.snow_generator);
         this.new_line();
+        this.key_triggered_button("Shake to reset", ["Control", "3"], this.snow_generator);
     }
 
     my_mouse_down(e, pos, context, program_state) {
