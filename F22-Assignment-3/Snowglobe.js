@@ -60,7 +60,7 @@ export class Snowglobe extends Scene {
                 {   color: hex_color("#000000"),
                     ambient: 1,
                     texture: new Texture("assets/royce_base.png", "NEAREST")}),
-            snow: new Material(new defs.Fake_Bump_Map(), {
+            snow: new Material(new defs.Fake_Bump_Map(3), {
                 color: hex_color("#000000"),
                 ambient: 1,
                 texture: new Texture("assets/snowy_ground.png", "NEAREST")}),
@@ -145,8 +145,8 @@ export class Snowglobe extends Scene {
             Math.PI / 4, context.width / context.height, .1, 1000);
 
 
-        model_transform = model_transform.times(Mat4.translation(7,40,0)).times(Mat4.scale(1.5,1.5,1.5));
-        program_state.lights.push(new Light(vec4(7,40,0,1), color(0, 0, 0, 1), 3**1.5));
+        model_transform = model_transform.times(Mat4.translation(7,20,0)).times(Mat4.scale(1.5,1.5,1.5));
+        program_state.lights.push(new Light(vec4(7,20,0,1), color(0, 0, 0, 1), 10));
         this.shapes.sphere.draw(context, program_state, model_transform, this.materials.lamp);
 
 
